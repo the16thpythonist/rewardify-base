@@ -11,11 +11,23 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=6.0', ]
 
-setup_requirements = ['pytest-runner', ]
+# 08.06.2019
+# We are using peewee as the ORM to access the database
+# argon2 provides the secure hashing algorithm to handle password hashing
+requirements = [
+    'Click>=6.0',
+    'peewee>=3.9',
+    'cffi>=1.12'
+    'argon2>=0.1.0',
+    'argon2_cffi>=19.0',
+    'numpy',
+    'pandas'
+]
 
-test_requirements = ['pytest', ]
+setup_requirements = requirements + ['pytest-runner', ]
+
+test_requirements = requirements + ['pytest', ]
 
 setup(
     author="Jonas Teufel",
@@ -36,20 +48,20 @@ setup(
     description="Base frame reward system",
     entry_points={
         'console_scripts': [
-            'rewardify_base=rewardify_base.cli:main',
+            'rewardify=rewardify.cli:main',
         ],
     },
     install_requires=requirements,
     license="BSD license",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
-    keywords='rewardify_base',
-    name='rewardify_base',
-    packages=find_packages(include=['rewardify_base']),
+    keywords='rewardify',
+    name='rewardify',
+    packages=find_packages(include=['rewardify']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/the16thpythonist/rewardify_base',
+    url='https://github.com/the16thpythonist/rewardify-base.git',
     version='0.0.0.0',
     zip_safe=False,
 )

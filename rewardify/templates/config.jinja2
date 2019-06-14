@@ -1,0 +1,47 @@
+from rewardify.backends import MockBackend
+
+# MAIN PROGRAM CONFIGURATION
+# --------------------------
+
+# Use this dict to configure the database access
+DATABASE = {
+    'engine':       'sqlite',
+    'host':         ':memory:',
+    'database':     none,
+    'user':         none,
+    'password':     none,
+    'port':         none,
+}
+
+# Specify the backend class to be used here
+BACKEND = MockBackend
+
+
+# REWARD AND PACK CONFIGURATION
+# -----------------------------
+
+REWARDS = {
+    'Nothing':  {
+        'cost':             1000,
+        'recycle':          500,
+        'description':      'You get literally nothing',
+        'rarity':           'common'
+    }
+}
+
+PACKS = {
+    'BasicPack': {
+        'cost':             1000,
+        'description':      'Only the most basic of rewards',
+        '1':                [1, 0, 0, 0],
+        '2':                [1, 0, 0, 0],
+        '3':                [1, 0, 0, 0],
+        '4':                [1, 0, 0, 0],
+        '5':                [1, 0, 0, 0]
+    }
+}
+
+# PLUGIN CONFIG
+# -------------
+
+MOCK_BACKEND_USERS = ["Your name"]

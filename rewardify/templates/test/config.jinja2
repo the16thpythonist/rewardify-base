@@ -1,0 +1,79 @@
+from rewardify.backends import MockBackend
+{#- Optionally including additional import statements #}
+{% if imports -%}
+{% for import in imports -%}
+{{ import }}
+{%- endfor %}
+{%- endif %}
+
+{# Creating the db config dict from the templare context 'db' #}
+{% if db -%}
+DATABASE = {
+    'engine':       '{{ db.engine }}',
+    'host':         '{{ db.host }}',
+    'database':     '{{ db.database }}',
+    'user':         '{{ db.user }}',
+    'password':     '{{ db.password }}',
+    'port':         {{ db.port }}
+}
+{%- endif %}
+
+{#- Defining the backend class to be used #}
+{% if backend -%}
+BACKEND = {{ backend }}
+{%- endif %}
+
+
+# REWARD AND PACK CONFIGURATION
+# -----------------------------
+
+REWARDS = {
+    'Nothing':  {
+        'cost':             1000,
+        'recycle':          500,
+        'description':      'You get literally nothing',
+        'rarity':           'common'
+    },
+    {% if rewards -%}
+    {% for reward in rewards -%}
+    '{{ reward.name }}': {
+        'cost':             {{ reward.cost }},
+        'recycle':          {{ reward.recycle }},
+        'description':      '{{ reward.description }}',
+        'rarity':           '{{ reward.rarity }}'
+    },
+    {%- endfor %}
+    {%- endif %}
+}
+
+PACKS = {
+    'BasicPack': {
+        'cost':             1000,
+        'description':      'Only the most basic of rewards',
+        '1':                [1, 0, 0, 0],
+        '2':                [1, 0, 0, 0],
+        '3':                [1, 0, 0, 0],
+        '4':                [1, 0, 0, 0],
+        '5':                [1, 0, 0, 0]
+    },
+    {% if packs -%}
+    {% for pack in packs -%}
+    '{{ pack.name }}': {
+        'cost':             {{ pack.cost }},
+        'description':      '{{ pack.description }}',
+        '1':                [{% for value in pack.slot1 -%}{{ value }},{%- endfor %}],
+        '2':                [{% for value in pack.slot2 -%}{{ value }},{%- endfor %}],
+        '3':                [{% for value in pack.slot3 -%}{{ value }},{%- endfor %}],
+        '4':                [{% for value in pack.slot4 -%}{{ value }},{%- endfor %}],
+        '5':                [{% for value in pack.slot5 -%}{{ value }},{%- endfor %}],
+    },
+    {%- endfor %}
+    {%- endif %}
+}
+
+# PLUGIN CONFIG
+# -------------
+
+{% if plugin -%}
+{{ plugin }}
+{%- endif %}

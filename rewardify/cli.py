@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-"""Console script for rewardify_base."""
+"""Console script for rewardify."""
 import sys
 import click
 
 
 @click.command()
 def main(args=None):
-    """Console script for rewardify_base."""
+    """Console script for rewardify."""
     click.echo("Replace this message by putting your code into "
-               "rewardify_base.cli.main")
+               "rewardify.cli.main")
     click.echo("See click documentation at http://click.pocoo.org/")
     return 0
 

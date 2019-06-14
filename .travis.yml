@@ -25,5 +25,5 @@ deploy:
     secure: PLEASE_REPLACE_ME
   on:
     tags: true
-    repo: the16thpythonist/rewardify_base
+    repo: the16thpythonist/rewardify-base
     python: 3.6

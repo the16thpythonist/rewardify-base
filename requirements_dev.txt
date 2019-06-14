@@ -10,3 +10,10 @@ twine==1.12.1
 
 pytest==3.8.2
 pytest-runner==4.2
+
+argon2
+argon2_cffi
+peewee
+jinja2
+numpy
+pandas
