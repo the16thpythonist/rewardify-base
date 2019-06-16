@@ -41,4 +41,13 @@ History
 
 * Added "user.save()" calls to all the methods of the facade, that modify the models, so that the modifications
   actually get taken over into the database
+
+0.2.3 (2019-06-16)
+------------------
+
 * Extended the clean method for the Environment setup of the test cases to also remove sub folders
+
+0.2.4 (2019-06-16)
+------------------
+
+* Fixed a bug, which causes the "open_pack" method of the User model not to work properly

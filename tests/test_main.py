@@ -213,6 +213,22 @@ class TestMain(RewardifyTestCase):
         gold = facade.user_get_gold(self.SAMPLE_USER_PARAMETERS['name'])
         self.assertEqual(gold, 0)
 
+    def test_user_open_pack(self):
+        self.setup_sample()
+        self.create_sample_user()
+        facade: Rewardify = Rewardify.instance()
+
+        facade.user_add_gold(self.SAMPLE_USER_PARAMETERS['name'], 100)
+        facade.user_buy_pack(self.SAMPLE_USER_PARAMETERS['name'], 'Sample Pack')
+        user = self.get_sample_user()
+        self.assertEqual(len(user.packs), 1)
+
+        facade.user_open_pack(self.SAMPLE_USER_PARAMETERS['name'], 'Sample Pack')
+        user = self.get_sample_user()
+        self.assertEqual(len(user.packs), 0)
+        self.assertEqual(len(user.rewards), 5)
+
+
     # HELPER METHODS
     # --------------
 

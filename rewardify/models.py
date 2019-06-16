@@ -255,7 +255,7 @@ class User(BaseModel):
             # "rarity_reward_map". This is the second step of the random process to get the rewards. from all these
             # rewards with the same, chosen rarity one is being picked with equal probabilities
             rarity_rewards = rarity_reward_map[rarity]
-            reward_parameters = np.random.choice(rarity_rewards, 1)
+            reward_parameters = np.random.choice(rarity_rewards, 1)[0]
 
             # From the parameter dict, we can now add the rewards to the user directly
             self.add_reward(reward_parameters)
