@@ -350,6 +350,7 @@ class Rewardify:
         reward_parameters = self.available_rewards_parameters()
 
         user.open_pack(packname, reward_parameters)
+        user.save()
 
     def user_buy_pack(self, username: str, packname: str):
         """
@@ -376,6 +377,7 @@ class Rewardify:
         pack_parameters = parameters_adapter.parameters()
 
         user.buy_pack(pack_parameters)
+        user.save()
 
     def user_get_packs(self, username: str) -> List[Pack]:
         """
@@ -427,6 +429,7 @@ class Rewardify:
         """
         user = self.get_user(username)
         user.use_reward(rewardname)
+        user.save()
 
     def user_buy_reward(self, username: str, rewardname: str):
         """
@@ -454,6 +457,7 @@ class Rewardify:
         reward_parameters = parameters_adapter.parameters()
 
         user.buy_reward(reward_parameters)
+        user.save()
 
     def user_recycle_reward(self, username: str, rewardname: str):
         """
@@ -473,6 +477,7 @@ class Rewardify:
         """
         user = self.get_user(username)
         user.recycle_reward(rewardname)
+        user.save()
 
     def user_get_rewards(self, username: str) -> List[Reward]:
         """

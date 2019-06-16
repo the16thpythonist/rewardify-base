@@ -197,6 +197,22 @@ class TestMain(RewardifyTestCase):
         user_exists = facade.exists_user(self.SAMPLE_USER_PARAMETERS['name'])
         self.assertTrue(user_exists)
 
+    def test_user_get_dust(self):
+        self.setup_sample()
+        self.create_sample_user()
+        facade: Rewardify = Rewardify.instance()
+
+        dust = facade.user_get_dust(self.SAMPLE_USER_PARAMETERS['name'])
+        self.assertEqual(dust, 0)
+
+    def test_user_get_gold(self):
+        self.setup_sample()
+        self.create_sample_user()
+        facade: Rewardify = Rewardify.instance()
+
+        gold = facade.user_get_gold(self.SAMPLE_USER_PARAMETERS['name'])
+        self.assertEqual(gold, 0)
+
     # HELPER METHODS
     # --------------
 

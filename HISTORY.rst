@@ -35,3 +35,9 @@ History
 
 * Fixed, that the facade method for buying a pack internally called the method for adding a pack, thus not
   actually spending gold on it
+
+0.2.2 (2019-06-16)
+------------------
+
+* Added "user.save()" calls to all the methods of the facade, that modify the models, so that the modifications
+actually get taken over into the database
