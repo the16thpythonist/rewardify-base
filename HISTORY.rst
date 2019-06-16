@@ -51,3 +51,10 @@ History
 ------------------
 
 * Fixed a bug, which causes the "open_pack" method of the User model not to work properly
+
+0.2.5 (2019-06-16)
+------------------
+
+* Rethought the effect system: The "use" method of Reward now returns a list with functions, which contain the effects.
+* Fixed a bug, where the facade method for using a reward did not execute the effects of the reward
+  properly

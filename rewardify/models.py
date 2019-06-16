@@ -1,7 +1,7 @@
 # standard library
 import re
 
-from typing import Dict, List
+from typing import Dict, List, Callable
 
 from collections import defaultdict
 
@@ -76,8 +76,9 @@ class User(BaseModel):
         :return:
         """
         rewards = self.get_rewards(reward_name)
-        reward = rewards[0]
-        reward.use()
+        reward: Reward = rewards[0]
+        effects = reward.use()
+        self.execute_effects(effects)
 
     def add_reward(self, reward_parameters: Dict):
         """
@@ -95,6 +96,10 @@ class User(BaseModel):
         reward_parameters.update({'user': self})
         reward = Reward(**reward_parameters)
         reward.save()
+
+    def execute_effects(self, effects: List[Callable]):
+        for effect in effects:
+            effect()
 
     def buy_reward(self, reward_parameters: Dict):
         """
@@ -433,7 +438,7 @@ class Reward(BaseModel):
     # INSTANCE METHODS
     # ----------------
 
-    def use(self):
+    def use(self) -> List[Callable]:
         """
         This method will use up the reward. First any possible effect of the reward will be evaluated and then the
         instance is deleted
@@ -444,8 +449,9 @@ class Reward(BaseModel):
 
         :return:
         """
-        self.evaluate_effect()
+        effects = self.evaluate_effect()
         self.delete_instance()
+        return effects
 
     def recycle(self):
         """
@@ -462,7 +468,7 @@ class Reward(BaseModel):
         self.delete_instance()
         return dust_recycle
 
-    def evaluate_effect(self):
+    def evaluate_effect(self) -> List[Callable]:
         """
         This method evaluates the effect given in the "effect" string of the reward instance. The effect string can
         (it is an optional property of a reward) contain special syntax to describe, what kind of effect the reward has
@@ -474,23 +480,29 @@ class Reward(BaseModel):
 
         :return:
         """
-        self.evaluate_dust_effect()
-        self.evaluate_gold_effect()
-        self.user.save()
+        effects = [
+            self.evaluate_gold_effect(),
+            self.evaluate_dust_effect()
+        ]
+        return effects
 
     # EVALUATION OF THE EFFECTS
     # -------------------------
 
-    def evaluate_gold_effect(self):
+    def evaluate_gold_effect(self) -> Callable:
         """
         This method will evaluate the "effect" string of the reward instance to see if it contains the syntax
-        "gold(...)" for a gold effect and if it does the effect is being applied by adding as much gold as specified
-        in the parentheses to the users gold.
+        "gold(...)" for a gold effect and if it does a list containing the necessary source code strings to apply this
+        effect is being returned.
         Raises a value error if the argument within the parentheses is not an integer.
 
         CHANGELOG
 
         Added 15.06.2019
+
+        Changed 16.06.2019
+        Instead of evaluating the effect itself (which apparently is impossible) It returns a callable object with no
+        parameters, which executes the effect
 
         :raise: ValueError
 
@@ -501,23 +513,29 @@ class Reward(BaseModel):
             result = re.search(self.GOLD_EFFECT_REGEX, effect)
             substring = result.group(1)
             amount = int(substring)
-            self.user.gold += amount
+            gold = self.user.gold + amount
+
+            def effect():
+                update_query = User.update(gold=User.gold + 100).where(User.name == self.user.name)
+                update_query.execute()
+
+            return effect
         # An attribute error will occur, when the regular expression has not found anything and it is attempted to call
         # the "group(1)" method on a none type object.
         # In this case there just is no effect to be applied
         except AttributeError:
-            return
+            return lambda: 0
         # A value error will occur, when there was this expression in the effect string, but the substring in between
         # the parentheses is not the string of an integer.
         # This is clearly a problem and thus the exception is being risen again
         except ValueError:
             raise ValueError('The substring "{}" can not be the argument of a GOLD EFFECT!'.format(substring))
 
-    def evaluate_dust_effect(self):
+    def evaluate_dust_effect(self) -> Callable:
         """
         This method will evaluate the "effect" string of the reward instance to see if it contains the syntax
-        "dust(...)" for a dust effect and if it does, the effect is being applied by adding as much dust as specified
-        in the parentheses to the users dust account.
+        "dust(...)" for a dust effect and if it does, a list containing the necessary source code strings to apply this
+        effect is being returned.
 
         Raises a value error if the argument within the parentheses is not an integer.
 
@@ -534,12 +552,18 @@ class Reward(BaseModel):
             result = re.search(self.DUST_EFFECT_REGEX, effect)
             substring = result.group(1)
             amount = int(substring)
-            self.user.dust += amount
+
+            def effect():
+                user = User.get(User.name == self.user.name)
+                user.dust += amount
+                user.save()
+
+            return effect
         # An attribute error will occur, when the regular expression has not found anything and it is attempted to call
         # the "group(1)" method on a none type object.
         # In this case there just is no effect to be applied
         except AttributeError:
-            return
+            return lambda: 0
         # A value error will occur, when there was this expression in the effect string, but the substring in between
         # the parentheses is not the string of an integer.
         # This is clearly a problem and thus the exception is being risen again

@@ -53,6 +53,14 @@ class TestMain(RewardifyTestCase):
             'rarity':           'uncommon',
             'cost':             100,
             'recycle':          100
+        },
+        {
+            'name':             'Gold Reward',
+            'description':      'grants 100 gold for testing',
+            'rarity':           'uncommon',
+            'cost':             100,
+            'recycle':          100,
+            'effect':           'gold(100)'
         }
     ]
 
@@ -85,7 +93,7 @@ class TestMain(RewardifyTestCase):
         self.setup_sample()
 
         rarity_reward_map = available_rewards_by_rarity()
-        self.assertEqual(len(rarity_reward_map['uncommon']), 1)
+        self.assertEqual(len(rarity_reward_map['uncommon']), 2)
         self.assertEqual(len(rarity_reward_map['legendary']), 0)
 
     def test_open_pack(self):
@@ -228,6 +236,21 @@ class TestMain(RewardifyTestCase):
         self.assertEqual(len(user.packs), 0)
         self.assertEqual(len(user.rewards), 5)
 
+    def test_user_use_reward_with_effect(self):
+        self.setup_sample()
+        self.create_sample_user()
+        facade: Rewardify = Rewardify.instance()
+
+        facade.user_add_dust(self.SAMPLE_USER_PARAMETERS['name'], 100)
+        facade.user_buy_reward(self.SAMPLE_USER_PARAMETERS['name'], 'Gold Reward')
+        user = self.get_sample_user()
+        self.assertEqual(len(user.rewards), 1)
+        self.assertEqual(user.gold, 0)
+        facade.user_use_reward(self.SAMPLE_USER_PARAMETERS['name'], 'Gold Reward')
+        user = User.select().where(User.name == self.SAMPLE_USER_PARAMETERS['name'])[0]
+        self.assertEqual(len(user.rewards), 0)
+        print(user.gold)
+        self.assertEqual(user.gold, 100)
 
     # HELPER METHODS
     # --------------

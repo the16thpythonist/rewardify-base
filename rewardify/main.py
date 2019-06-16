@@ -421,6 +421,10 @@ class Rewardify:
 
         Added 15.06.2019
 
+        Changed 16.06.2019
+        Fixed a bug, where changes made by the effect of the reward would be overwritten by calling the save method
+        of an unchanged user instance.
+
         :raise: LookupError
 
         :param username:
@@ -429,6 +433,12 @@ class Rewardify:
         """
         user = self.get_user(username)
         user.use_reward(rewardname)
+
+        # 16.05.2019
+        # NOTE! Getting the user here again (which means reloading it from the database) is super important. Because
+        # the "use_reward" method makes changes to the database, which would be overwritten if a save() method on an
+        # instance without these changes would be called
+        user = self.get_user(username)
         user.save()
 
     def user_buy_reward(self, username: str, rewardname: str):

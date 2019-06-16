@@ -502,7 +502,9 @@ class TestReward(DBTestCase):
         user.add_reward(reward_parameters)
 
         reward = user.rewards[0]
-        reward.evaluate_effect()
+        effects = reward.evaluate_effect()
+        for effect in effects:
+            effect()
 
         user = self.get_standard_user()
         self.assertEqual(user.gold, 100)
@@ -519,7 +521,9 @@ class TestReward(DBTestCase):
         user.add_reward(reward_parameters)
 
         reward = user.rewards[0]
-        reward.evaluate_effect()
+        effects = reward.evaluate_effect()
+        for effect in effects:
+            effect()
 
         user = self.get_standard_user()
         self.assertEqual(user.gold, 100)
