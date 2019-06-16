@@ -118,6 +118,17 @@ class ForestCSVFile:
         """
         return self.get_dicts_from_dataframe(self.data_frame)
 
+    def get_last_start_time(self):
+        """
+        Returns the pandas Timestamp object for the start time of the last activity
+
+        CHANGELOG
+
+        Added 16.06.2019
+        :return:
+        """
+        return self.data_frame['Start Time'].max()
+
     # HELPER METHODS
     # --------------
 
@@ -319,6 +330,10 @@ class ForestBackend(CheckConfigMixin, AbstractBackend):
 
         Added 13.06.2019
 
+        Changed 16.06.2019
+        The state now gets updated after calling this method, which means a second call to get new methods will return
+        an empty list, as the activities are not new anymore, when there was a previous call
+
         :return:
         """
         user_activities = {}
@@ -331,6 +346,7 @@ class ForestBackend(CheckConfigMixin, AbstractBackend):
                 # Thus we can get the new actovities as all the activities AFTER that last one
                 last_start_time = self.state[user_name]
                 activities += csv_file.get_dicts_after(last_start_time)
+                self.state[user_name] = csv_file.get_last_start_time()
 
             user_activities[user_name] = activities
 
@@ -468,6 +484,9 @@ class ForestBackend(CheckConfigMixin, AbstractBackend):
 
         Added 13.06.2019
 
+        Changed 16.06.2019
+        The new state is being saved at the end of the run.
+
         :return:
         """
         update_dict = defaultdict(list)
@@ -482,6 +501,11 @@ class ForestBackend(CheckConfigMixin, AbstractBackend):
                     'date':         datetime.datetime.now()
                 }
                 update_dict[user_name].append(action_dict)
+
+        # 16.06.2019
+        # After everything is updated the new state has to be saved, so that the next call to the update function will
+        # not return the ones from this run.
+        self.save_state(self.state)
 
         return update_dict
 

@@ -64,3 +64,18 @@ History
 
 * Changed the install directory for linux from "~/.rewardify" to "/opt/.rewardify" as the previous one isnt working
   with python path handling.
+
+0.2.10 (2019-06-16)
+-------------------
+
+* Added a method "init" to the EnvironmentConfig singleton, which will create the connection to the database
+
+0.2.11 (2019-06-16)
+-------------------
+
+* Fixed, that the pointer to the last accounted action was not being saved within the ForestBackend
+
+0.2.12 (2019-06-16)
+-------------------
+
+* Fixed the gold evaluation for the reward effects, it was accidentally set to constant value

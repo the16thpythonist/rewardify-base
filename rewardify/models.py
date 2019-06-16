@@ -513,10 +513,9 @@ class Reward(BaseModel):
             result = re.search(self.GOLD_EFFECT_REGEX, effect)
             substring = result.group(1)
             amount = int(substring)
-            gold = self.user.gold + amount
 
             def effect():
-                update_query = User.update(gold=User.gold + 100).where(User.name == self.user.name)
+                update_query = User.update(gold=User.gold + amount).where(User.name == self.user.name)
                 update_query.execute()
 
             return effect

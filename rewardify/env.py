@@ -321,7 +321,6 @@ class EnvironmentConfig:
         # platform, but inconfigureable for each platform.
         # We use the mapping of the platform to the folder path
         self.platform = platform.system()
-        print(self.PLATFORM_FOLDER_PATHS)
         self.folder_path = self.PLATFORM_FOLDER_PATHS[self.platform]
 
         # Creating a new database configuration object from the default
@@ -355,6 +354,17 @@ class EnvironmentConfig:
 
     def load_database(self):
         self.database_config = DatabaseConfig.from_dict(self.DATABASE)
+
+    def init(self):
+        """
+        CHANGELOG
+
+        Added 16.06.2019
+        :return:
+        """
+        self.database_config.init()
+        DATABASE_PROXY.initialize(self.database_config.instance)
+        self.database_config.connect()
 
     def read_file(self, file_path: str):
         with open(file_path, mode='r+') as file:
