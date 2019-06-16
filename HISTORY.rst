@@ -58,3 +58,9 @@ History
 * Rethought the effect system: The "use" method of Reward now returns a list with functions, which contain the effects.
 * Fixed a bug, where the facade method for using a reward did not execute the effects of the reward
   properly
+
+0.2.6 (2019-06-16)
+------------------
+
+* Changed the install directory for linux from "~/.rewardify" to "/opt/.rewardify" as the previous one isnt working
+  with python path handling.

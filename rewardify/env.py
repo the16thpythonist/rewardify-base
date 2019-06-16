@@ -298,7 +298,7 @@ class EnvironmentConfig:
     # ---------------
 
     PLATFORM_FOLDER_PATHS = {
-        'Linux': '~/.rewardify',
+        'Linux': '/opt/.rewardify',
         'Darwin': 'NONE',
         'Windows': 'NONE'
     }
