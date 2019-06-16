@@ -40,4 +40,5 @@ History
 ------------------
 
 * Added "user.save()" calls to all the methods of the facade, that modify the models, so that the modifications
-actually get taken over into the database
+  actually get taken over into the database
+* Extended the clean method for the Environment setup of the test cases to also remove sub folders
