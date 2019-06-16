@@ -170,6 +170,10 @@ class Rewardify:
 
     Added 10.06.2019
 
+    Changed 15.06.2019
+    Added the method "exists_user" which returns the boolean value of a user of that name exists in the database.
+    Added multiple methods for dealing with rewards including the buying, using and recycling
+
     """
     CONFIG: EnvironmentConfig = EnvironmentConfig.instance()
 
@@ -283,6 +287,21 @@ class Rewardify:
         )
         user.save()
 
+    def exists_user(self, username: str):
+        """
+        Returns the boolean value of whether or not a user with the given username exists
+
+        CHANGELOG
+
+        Added 15.06.2019
+
+        :param username:
+        :return:
+        """
+        query = User.select().where(User.name == username)
+        # Of course, when there is a result to the above query, a User object has been found and thus, the user exists
+        return len(query) != 0
+
     # DATABASE MODELS
     # ---------------
 
@@ -356,7 +375,7 @@ class Rewardify:
         parameters_adapter = PackParametersAdapter(packname, pack_config)
         pack_parameters = parameters_adapter.parameters()
 
-        user.add_pack(pack_parameters)
+        user.buy_pack(pack_parameters)
 
     def user_get_packs(self, username: str) -> List[Pack]:
         """
@@ -389,6 +408,71 @@ class Rewardify:
 
     # USER REWARD MANAGEMENT
     # ----------------------
+
+    def user_use_reward(self, username: str, rewardname: str):
+        """
+        Given the type name of one of the rewards in the given users inventory, this method will use the reward for the
+        user, which means the effect will be evaluated and the the instance will be deleted.
+        If the user does not own a reward of the given type, a LookupError will be risen.
+
+        CHANGELOG
+
+        Added 15.06.2019
+
+        :raise: LookupError
+
+        :param username:
+        :param rewardname:
+        :return:
+        """
+        user = self.get_user(username)
+        user.use_reward(rewardname)
+
+    def user_buy_reward(self, username: str, rewardname: str):
+        """
+        Given the name of an available reward this method will buy one instance of that type for the given user.
+        If the there is no reward type of the given name, the method will raise a KeyError.
+        If the user does not have enough dust to buy that reward, this method will raise a PermissionError
+
+        CHANGELOG
+
+        Added 15.06.2019
+
+        :raise: KeyError, PermissionError
+
+        :param username:
+        :param rewardname:
+        :return:
+        """
+        user = self.get_user(username)
+
+        reward_config = self.CONFIG.REWARDS[rewardname]
+        # The "user.buy_reward" function expects a complete parameter dict for the Reward class, this has to be created
+        # first by plugging the dict from the config file for the reward type into the parameters adapter.
+        # Every parameters adapter conforms to an interface, where the "parameters" method returns the parameters dict
+        parameters_adapter = RewardParametersAdapter(rewardname, reward_config)
+        reward_parameters = parameters_adapter.parameters()
+
+        user.buy_reward(reward_parameters)
+
+    def user_recycle_reward(self, username: str, rewardname: str):
+        """
+        This method will recylce one of the rewards with the given reward name in the given users inventory. This means
+        that the instance of the reward will be removed from the inventory and recycled dust will be added to the inv.
+        This method will raise a LookupError, when the user does not own a reward of the given type
+
+        CHANGELOG
+
+        Added 15.06.2019
+
+        :raise: LookupError
+
+        :param username:
+        :param rewardname:
+        :return:
+        """
+        user = self.get_user(username)
+        user.recycle_reward(rewardname)
 
     def user_get_rewards(self, username: str) -> List[Reward]:
         """

@@ -37,6 +37,9 @@ class TestModels(DBTestCase):
     SAMPLE_REWARD_DUST_RECYCLE = 500
     SAMPLE_REWARD_RARITY = 'common'
     SAMPLE_REWARD_DATE = datetime.datetime.now()
+    # 15.06.2019
+    # In the new version, the Reward class has an additional field "effect"
+    SAMPLE_REWARD_EFFECT = ''
 
     # GENERAL TEST CASES
     # ------------------
@@ -123,9 +126,6 @@ class TestModels(DBTestCase):
         # Loading the pack to see it it worked
         pack = Pack.get(Pack.slug == 'simple_pack')
         self.assertEqual(pack.name, 'Simple Pack')
-        # Due to lazy loading disabled, the user attribute should in this case only be the primary key of the
-        # user in the user column
-        self.assertEqual(pack.user, 1)
 
     def test_pack_joining_user_column_works(self):
         self.setup_sample_user()
@@ -177,6 +177,7 @@ class TestModels(DBTestCase):
             dust_cost=100,
             dust_recycle=1,
             date_obtained=datetime.datetime.now(),
+            effect='',
             rarity='legendary',
             user=user
         )
@@ -230,6 +231,7 @@ class TestModels(DBTestCase):
             dust_recycle=self.SAMPLE_REWARD_DUST_RECYCLE,
             date_obtained=self.SAMPLE_REWARD_DATE,
             rarity=self.SAMPLE_REWARD_RARITY,
+            effect=self.SAMPLE_REWARD_EFFECT,
             user=user,
         )
         reward.save()
@@ -257,10 +259,16 @@ class TestUser(DBTestCase):
         'slot5':            [1, 0, 0, 0],
     }
 
+    # This dict has key names in such a way, that it can be directly unpacked into the constructor of the Reward class
+    # to create new instance
+    # 15.06.2019
+    # Added the effect parameter (Which will contain a string, that eventually contains a directive of what effect the
+    # rewards has for the program)
     SAMPLE_REWARD_PARAMETERS = {
         'name':             'Sample Reward',
         'slug':             'sample_reward',
         'description':      'testing',
+        'effect':           '',
         'rarity':           1,
         'date_obtained':    datetime.datetime.now(),
         'dust_cost':        100,
@@ -391,6 +399,7 @@ class TestUser(DBTestCase):
                 'name': 'Sample Reward',
                 'slug': 'sample_reward',
                 'description': 'testing',
+                'effect': '',
                 'rarity': 1,
                 'date_obtained': datetime.datetime.now(),
                 'dust_cost': 100,
@@ -401,6 +410,7 @@ class TestUser(DBTestCase):
                 'slug': 'sample_reward',
                 'description': 'testing',
                 'rarity': 1,
+                'effect': '',
                 'date_obtained': datetime.datetime.now(),
                 'dust_cost': 100,
                 'dust_recycle': 100,
@@ -410,6 +420,7 @@ class TestUser(DBTestCase):
                 'slug': 'crumble_reward',
                 'description': 'testing',
                 'rarity': 1,
+                'effect': '',
                 'date_obtained': datetime.datetime.now(),
                 'dust_cost': 100,
                 'dust_recycle': 100,
@@ -438,3 +449,88 @@ class TestUser(DBTestCase):
     def get_sample_user(self) -> User:
         user = User.get(User.name == self.SAMPLE_USER_PARAMETERS['name'])
         return user
+
+
+class TestReward(DBTestCase):
+
+    # THE STANDARD MODELS
+    # -------------------
+
+    STANDARD_USER_PARAMETERS = {
+        'name':         'Jonas',
+        'password':     'secret',
+        'dust':         0,
+        'gold':         0,
+    }
+
+    STANDARD_REWARD_PARAMETERS = {
+        'name':             'Standard reward',
+        'slug':             'standard_reward',
+        'description':      'testing',
+        'dust_cost':        100,
+        'dust_recycle':     50,
+        'date_obtained':    datetime.datetime.now(),
+        'rarity':           'common',
+        'effect':           ''
+    }
+
+    # ACTUAL TESTS
+    # ------------
+
+    def test_recycle_reward(self):
+        self.create_standard_user()
+        user = self.get_standard_user()
+        user.add_reward(self.STANDARD_REWARD_PARAMETERS)
+
+        # At this point the standard user should have one reward an not dust
+        self.assertEqual(len(user.rewards), 1)
+        self.assertEqual(user.gold, 0)
+
+        # Now we recycle the reward and for the standard reward this should be 50 dust
+        reward = user.rewards[0]
+        self.assertEqual(reward.recycle(), 50)
+
+    def test_evaluate_gold_effect(self):
+        self.create_standard_user()
+        user = self.get_standard_user()
+
+        self.assertEqual(user.gold, 0)
+        # Now we add a user with a gold effect to the user and after we have evaluated it the user should have gone
+        # from 0 to 100 gold
+        reward_parameters = self.STANDARD_REWARD_PARAMETERS
+        reward_parameters.update({'effect': 'gold(100)'})
+        user.add_reward(reward_parameters)
+
+        reward = user.rewards[0]
+        reward.evaluate_effect()
+
+        user = self.get_standard_user()
+        self.assertEqual(user.gold, 100)
+
+    def test_evaluate_gold_and_dust_effect_in_one_string(self):
+        self.create_standard_user()
+        user = self.get_standard_user()
+
+        self.assertEqual(user.gold, 0)
+        # Now we add a user with a gold and dust effect to the user and after we have evaluated it the user should have
+        # gone from 0 to 100 gold and from 0 to 200 dust
+        reward_parameters = self.STANDARD_REWARD_PARAMETERS
+        reward_parameters.update({'effect': 'gold(100) dust(200)'})
+        user.add_reward(reward_parameters)
+
+        reward = user.rewards[0]
+        reward.evaluate_effect()
+
+        user = self.get_standard_user()
+        self.assertEqual(user.gold, 100)
+        self.assertEqual(user.dust, 200)
+
+    # HELPER METHODS
+    # --------------
+
+    def create_standard_user(self):
+        user = User(**self.STANDARD_USER_PARAMETERS)
+        user.save()
+
+    def get_standard_user(self):
+        return User.get(User.name == self.STANDARD_USER_PARAMETERS['name'])

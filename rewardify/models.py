@@ -1,4 +1,6 @@
 # standard library
+import re
+
 from typing import Dict, List
 
 from collections import defaultdict
@@ -61,6 +63,22 @@ class User(BaseModel):
     # REWARD MANAGEMENT
     # -----------------
 
+    def use_reward(self, reward_name: str):
+        """
+        Given the reward name of a type of reward in the users inventory, this method will user the reward. This means
+        the reward effect will be evaluated first (if there is one) and then the instance will be deleted.
+
+        CHANGELOG
+
+        Added 15.06.2019
+
+        :param reward_name:
+        :return:
+        """
+        rewards = self.get_rewards(reward_name)
+        reward = rewards[0]
+        reward.use()
+
     def add_reward(self, reward_parameters: Dict):
         """
         Given the parameters dict for a new reward object, this method will add the specified reward to the user
@@ -109,6 +127,11 @@ class User(BaseModel):
 
         Added 12.06.2019
 
+        Changed 15.06.2019
+        Now the recycling "operation" is not done in here, because that is none of the concern of the user object,
+        instead the "recycle()" method of the Reward instance is called and the returned int amount of dust is added
+        to the dust balance of the user.
+
         :raises: LookupError
 
         :param reward_name:
@@ -116,9 +139,7 @@ class User(BaseModel):
         """
         rewards = self.get_rewards(reward_name)
         reward: Reward = rewards[0]
-        self.dust += reward.dust_recycle
-
-        reward.delete_instance()
+        self.dust += reward.recycle()
 
     def get_rewards(self, reward_name: str) -> List:
         """
@@ -377,7 +398,18 @@ class Reward(BaseModel):
     CHANGELOG
 
     Added 09.06.2019
+
+    Changed 15.06.2019
+    Added the "recycle" method, which will delete the instance and return the amount of dust gained from the recycling.
+    Added the "use" method, which will use up the reward.
+    Added the "effect" text field for the new version. This field can optionally contain a special syntax, which
+    specified, what effect the reward has on the rewardify system, when it is being used. As of right now two effects
+    are being supported: Granting gold and dust to the user upon opening.
     """
+
+    # DATABASE FIELDS
+    # ---------------
+
     name = CharField()
     slug = CharField()
     description = TextField()
@@ -385,8 +417,134 @@ class Reward(BaseModel):
     dust_recycle = IntegerField()
     date_obtained = DateTimeField()
     rarity = RarityField()
+    effect = TextField()
 
-    user = ForeignKeyField(User, backref='rewards', lazy_load=False)
+    user = ForeignKeyField(User, backref='rewards')
+
+    # CONSTANTS
+    # ---------
+
+    # These regular expressions will search for any occurance of the substrings "gold(...)" and "dust(...)".
+    # The result of the regular expressions will also directly exctract the substring from within the parentheses,
+    # which specify the amount that has been granted by this effect
+    GOLD_EFFECT_REGEX = 'gold\((.+?)\)'
+    DUST_EFFECT_REGEX = 'dust\((.+?)\)'
+
+    # INSTANCE METHODS
+    # ----------------
+
+    def use(self):
+        """
+        This method will use up the reward. First any possible effect of the reward will be evaluated and then the
+        instance is deleted
+
+        CHANGELOG
+
+        Added 15.06.2019
+
+        :return:
+        """
+        self.evaluate_effect()
+        self.delete_instance()
+
+    def recycle(self):
+        """
+        This method will recycle the reward, which means, that the instance will be deleted, but the method will return
+        the integer amount of dust, that has been gained from recycling the reward
+
+        CHANGELOG
+
+        Added 15.06.2019
+
+        :return:
+        """
+        dust_recycle = self.dust_recycle
+        self.delete_instance()
+        return dust_recycle
+
+    def evaluate_effect(self):
+        """
+        This method evaluates the effect given in the "effect" string of the reward instance. The effect string can
+        (it is an optional property of a reward) contain special syntax to describe, what kind of effect the reward has
+        on the rewardify system, when it is being used. (Such as adding gold to the users balance)
+
+        CHANGELOG
+
+        Added 15.06.2019
+
+        :return:
+        """
+        self.evaluate_dust_effect()
+        self.evaluate_gold_effect()
+        self.user.save()
+
+    # EVALUATION OF THE EFFECTS
+    # -------------------------
+
+    def evaluate_gold_effect(self):
+        """
+        This method will evaluate the "effect" string of the reward instance to see if it contains the syntax
+        "gold(...)" for a gold effect and if it does the effect is being applied by adding as much gold as specified
+        in the parentheses to the users gold.
+        Raises a value error if the argument within the parentheses is not an integer.
+
+        CHANGELOG
+
+        Added 15.06.2019
+
+        :raise: ValueError
+
+        :return:
+        """
+        try:
+            effect = str(self.effect)
+            result = re.search(self.GOLD_EFFECT_REGEX, effect)
+            substring = result.group(1)
+            amount = int(substring)
+            self.user.gold += amount
+        # An attribute error will occur, when the regular expression has not found anything and it is attempted to call
+        # the "group(1)" method on a none type object.
+        # In this case there just is no effect to be applied
+        except AttributeError:
+            return
+        # A value error will occur, when there was this expression in the effect string, but the substring in between
+        # the parentheses is not the string of an integer.
+        # This is clearly a problem and thus the exception is being risen again
+        except ValueError:
+            raise ValueError('The substring "{}" can not be the argument of a GOLD EFFECT!'.format(substring))
+
+    def evaluate_dust_effect(self):
+        """
+        This method will evaluate the "effect" string of the reward instance to see if it contains the syntax
+        "dust(...)" for a dust effect and if it does, the effect is being applied by adding as much dust as specified
+        in the parentheses to the users dust account.
+
+        Raises a value error if the argument within the parentheses is not an integer.
+
+        CHANGELOG
+
+        Added 15.06.2019
+
+        :raise: ValueError
+
+        :return:
+        """
+        try:
+            effect = str(self.effect)
+            result = re.search(self.DUST_EFFECT_REGEX, effect)
+            substring = result.group(1)
+            amount = int(substring)
+            self.user.dust += amount
+        # An attribute error will occur, when the regular expression has not found anything and it is attempted to call
+        # the "group(1)" method on a none type object.
+        # In this case there just is no effect to be applied
+        except AttributeError:
+            return
+        # A value error will occur, when there was this expression in the effect string, but the substring in between
+        # the parentheses is not the string of an integer.
+        # This is clearly a problem and thus the exception is being risen again
+        except ValueError:
+            raise ValueError('The substring "{}" can not be the argument of a DUST EFFECT!'.format(substring))
 
 
 class Pack(BaseModel):
@@ -410,7 +568,7 @@ class Pack(BaseModel):
     slot4 = ProbabilityField()
     slot5 = ProbabilityField()
 
-    user = ForeignKeyField(User, backref='packs', lazy_load=False)
+    user = ForeignKeyField(User, backref='packs')
 
     def get_slots(self):
         """

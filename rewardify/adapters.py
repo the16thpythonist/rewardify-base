@@ -91,8 +91,13 @@ class RewardParametersAdapter(SlugAdapterMixin, ModelParameterAdapterInterface):
     CHANGELOG
 
     Added 12.06.2019
+
+    Changed 15.06.2019
+    Made adjustments for the "effect" parameter of the Reward class in the new version
     """
 
+    # The keys are the string names, which the user can use in the config file and the values are the constants, which
+    # the code uses internally to create a new Reward object.
     RARITY_MAPPING = {
         'common':           Rarity.COMMON,
         'uncommon':         Rarity.UNCOMMON,
@@ -100,9 +105,36 @@ class RewardParametersAdapter(SlugAdapterMixin, ModelParameterAdapterInterface):
         'legendary':        Rarity.LEGENDARY,
     }
 
+    # 15.06.2019
+    # This default dict is needed as the effect parameter for example is OPTIONAL, which means, it does not appear in
+    # every config dict for a reward, but we have to provide a default value to the database model anyways
+    DEFAULT_CONFIG = {
+        'description':      '',
+        'rarity':           'common',
+        'effect':           '',
+        'cost':             0,
+        'recycle':          0
+    }
+
     def __init__(self, name: str, config: Dict):
+        """
+        The constructor.
+
+        CHANGELOG
+
+        Added 12.06.2019
+
+        Changed 15.06.2019
+        The config dict for the reward is now first being initialized with the DEFAULT_CONFIG dict and then updated
+        with the actual values of the given config.
+        This is to provide a default for eventually not given optional parameters (such as "effect")
+
+        :param name:
+        :param config:
+        """
         self.name = name
-        self.config = config
+        self.config = self.DEFAULT_CONFIG
+        self.config.update(config)
 
     def parameters(self) -> Dict:
         """
@@ -112,6 +144,10 @@ class RewardParametersAdapter(SlugAdapterMixin, ModelParameterAdapterInterface):
 
         Added 12.06.2019
 
+        Changed 15.06.2019
+        Added the "effect" parameter, which has been introduced with the new version. The effect parameter will contain
+        a string directive, which denotes which effect the reward has on the system. For example granting dust
+
         :return:
         """
         parameters = {
@@ -119,6 +155,7 @@ class RewardParametersAdapter(SlugAdapterMixin, ModelParameterAdapterInterface):
             'slug':             self.create_slug(self.name),
             'description':      self.config['description'],
             'rarity':           self.convert_rarity(self.config['rarity']),
+            'effect':           self.config['effect'],
             'dust_cost':        self.config['cost'],
             'dust_recycle':     self.config['recycle'],
             'date_obtained':    datetime.datetime.now()

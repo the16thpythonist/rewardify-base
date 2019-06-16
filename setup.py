@@ -46,22 +46,21 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     description="Base frame reward system",
-    entry_points={
-        'console_scripts': [
-            'rewardify=rewardify.cli:main',
-        ],
-    },
     install_requires=requirements,
     license="BSD license",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
     keywords='rewardify',
     name='rewardify',
-    packages=find_packages(include=['rewardify']),
+    packages=find_packages(include=[
+        'rewardify',
+        'rewardify.backends',
+        'rewardify.templates'
+    ]),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/the16thpythonist/rewardify-base.git',
-    version='0.0.0.0',
+    version='0.2.1',
     zip_safe=False,
 )

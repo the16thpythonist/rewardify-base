@@ -184,6 +184,19 @@ class TestMain(RewardifyTestCase):
         user = self.get_sample_user()
         self.assertEqual(user.gold, 100)
 
+    def test_user_exists(self):
+        self.setup_sample()
+        facade: Rewardify = Rewardify.instance()
+
+        # Of course from the get go the user is not in the database, which means the exists call should return false
+        user_exists = facade.exists_user(self.SAMPLE_USER_PARAMETERS['name'])
+        self.assertFalse(user_exists)
+
+        # After we have inserted the user though the exists call should return true
+        self.create_sample_user()
+        user_exists = facade.exists_user(self.SAMPLE_USER_PARAMETERS['name'])
+        self.assertTrue(user_exists)
+
     # HELPER METHODS
     # --------------
 
