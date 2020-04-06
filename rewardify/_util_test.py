@@ -249,13 +249,13 @@ class ConfigTestMixin:
 
 class DBTestMixin:
     """
-        This is a abstract base class, which adds additional setUp and tearDown steps to create a fresh
-        in memory database before each test method is being executed, which enables the work with the model classes.
+    This is a abstract base class, which adds additional setUp and tearDown steps to create a fresh
+    in memory database before each test method is being executed, which enables the work with the model classes.
 
-        CHANGELOG
+    CHANGELOG
 
-        Added 09.06.2019
-        """
+    Added 09.06.2019
+    """
     TEST_DATABASE = SqliteDatabase(':memory:')
     MODELS = [
         User,

@@ -79,3 +79,4 @@ History
 -------------------
 
 * Fixed the gold evaluation for the reward effects, it was accidentally set to constant value
+

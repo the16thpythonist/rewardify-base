@@ -4,6 +4,8 @@ import os
 import datetime
 import json
 
+from collections import defaultdict
+
 # third party
 import pandas
 import pandas.api.types as ptypes
@@ -13,6 +15,7 @@ from rewardify._util_test import RewardifyTestCase
 
 from rewardify.backends import MockBackend, ForestBackend
 from rewardify.backends.forest import ForestCSVFile
+from rewardify.backends.combine import combine_backends
 
 from rewardify.env import EnvironmentConfig
 
@@ -206,7 +209,7 @@ FOREST_BACKEND_SETTINGS = {
     "Joana": {
         "name":     "LuaMia",
         "period":   30,
-        "default":  10     
+        "default":  10
     },
 }'''
 
@@ -348,3 +351,123 @@ FOREST_BACKEND_SETTINGS = {
             path = os.path.join(self.FOLDER_PATH, name)
             paths.append(path)
         return paths
+
+# ########################## #
+# USAGE OF MULTIPLE BACKENDS #
+# ########################## #
+
+
+class TestCombineBackends(RewardifyTestCase):
+    """
+    Testing the functionality from the module "rewardify.backend.combine"
+
+    CHANGELOG
+
+    Added 06.05.2020
+    """
+
+    CONFIG: EnvironmentConfig = EnvironmentConfig.instance()
+
+    SAMPLE_IMPORTS = [
+        'from rewardify.backends import AbstractBackend'
+    ]
+
+    SAMPLE_DATABASE_DICT = {
+        'engine': 'sqlite',
+        'host': ':memory:',
+        'database': '',
+        'user': '',
+        'password': '',
+        'port': 0
+    }
+
+    SAMPLE_PACKS = [
+        {
+            'name': 'SamplePack',
+            'description': 'shitty pack',
+            'cost': 1000,
+            'slot1': [1, 0, 0, 0],
+            'slot2': [1, 0, 0, 0],
+            'slot3': [1, 0, 0, 0],
+            'slot4': [1, 0, 0, 0],
+            'slot5': [1, 0, 0, 0],
+        }
+    ]
+
+    SAMPLE_REWARDS = [
+        {
+            'name': 'SampleReward',
+            'cost': 1000,
+            'recycle': 1000,
+            'description': 'none',
+            'rarity': 'common'
+        }
+    ]
+
+    SAMPLE_BACKEND = 'MockBackend'
+
+    SAMPLE_PLUGIN_CODE = 'MOCK_BACKEND_USERS = ["Jonas"]'
+
+    def test_combination_class_has_correct_length(self):
+        combination = combine_backends(MockBackend, MockBackend)
+        self.assertEqual(2, len(combination))
+
+    def test_combination_object_creation_works(self):
+        self.setup_sample()
+
+        combination = combine_backends(MockBackend, MockBackend)
+        combination_object = combination()
+        self.assertIsInstance(combination_object, combination)
+
+    def test_insert_update_dict_empty_combined_dict(self):
+        combined_dict = defaultdict(list)
+        update_dict = {
+            'Jonas': ['Test']
+        }
+
+        combination = combine_backends()
+        result_dict = combination._insert_update_dict(combined_dict, update_dict)
+
+        self.assertDictEqual(update_dict, result_dict)
+
+    def test_insert_update_dict(self):
+        combined_dict = defaultdict(list, {
+            'Jonas': ['Hello']
+        })
+        update_dict = {
+            'Jonas': ['World']
+        }
+
+        combination = combine_backends()
+        result_dict = combination._insert_update_dict(combined_dict, update_dict)
+
+        expected_dict = {
+            'Jonas': ['Hello', 'World']
+        }
+
+        self.assertDictEqual(expected_dict, result_dict)
+
+    def test_combination_object_update_works(self):
+        self.setup_sample()
+
+        combination = combine_backends(MockBackend, MockBackend)
+        combination_object = combination()
+
+        update_dict = combination_object.get_update()
+
+        self.assertIsInstance(update_dict, dict)
+        self.assertEqual(1, len(update_dict))
+
+    # HELPER METHODS
+    # --------------
+
+    def setup_sample(self):
+        # Setting up the config-py file
+        self.create_config(
+            self.SAMPLE_IMPORTS,
+            self.SAMPLE_DATABASE_DICT,
+            self.SAMPLE_BACKEND,
+            self.SAMPLE_REWARDS,
+            self.SAMPLE_PACKS,
+            self.SAMPLE_PLUGIN_CODE
+        )
