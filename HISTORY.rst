@@ -80,3 +80,8 @@ History
 
 * Fixed the gold evaluation for the reward effects, it was accidentally set to constant value
 
+0.2.13 (2020-04-06)
+-------------------
+
+* Added the new method "rewardify.backends.combine" which offers the function "combine_backends"
+  which can be used to use multiple backend classes at the same time.
