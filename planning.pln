@@ -1,0 +1,19 @@
+So before I am making some huge ass design with the goals backend I need to know where I am going with this whole
+application long term. Like what is the use case, how will it be used. So I am thinking less of a desktop application
+and more of a server application, but you could still use it on the desktop. I want it to be able to do both things.
+
+And this presents me with a little bit of a problem, because since I want it to run as a terminal application, which
+does not have one continous runtime I sort of have to design every little piece of this application in a way that
+everything even like a little state for the backends needs to be stored in persistency right away...
+
+So if I intend to make this whole program into a bigger thing, then one way to look at the backends would be to sort
+of view it as actual third party applications, which just interface with the central aspect of the rewardify
+system sort of like github certified apps work: They just interface with it.
+For this to be true I would need a more sofisticated plugin system though...
+
+One idea I had was to build this whole thing "server first" Make the whole system just one single restful API and then
+the desktop version would be just starting the server locally and connecting to "localhost", which would also make the
+data transfer a lot faster. But on the other hand I wanted this "base" package to be implementation agnostic. Like
+I just wanted this whole thing to be literally just the database part of it and then build the server part completely
+around it...
+

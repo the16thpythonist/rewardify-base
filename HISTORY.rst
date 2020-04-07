@@ -85,3 +85,8 @@ History
 
 * Added the new method "rewardify.backends.combine" which offers the function "combine_backends"
   which can be used to use multiple backend classes at the same time.
+
+0.2.14 (2020-04-07)
+-------------------
+
+* Added the GoalBackend
